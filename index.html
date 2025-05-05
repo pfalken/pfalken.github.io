@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- 96833E -->
+
+<head>
+    <meta charset="UTF-8">
+    <title>70s Style Console</title>
+    <style>
+        body {
+            background-color: black;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+            font-size: 1em;
+        }
+
+        #console {
+            background-color: var(--console-bgcolor);
+            color: var(--console-color);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            font-weight: var(--console-fontw);
+            width: 100%;
+            height: 90vh;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.4;
+            border: 2px solid var(--console-color);
+            padding: 10px;
+            box-sizing: border-box;
+            z-index: 1;
+            scrollbar-width: thin;
+            scrollbar-color: var(--console-color) var(--console-bgcolor);
+        }
+
+        #console::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #console::-webkit-scrollbar-track {
+            background: var(--console-bgcolor);
+        }
+
+        #console::-webkit-scrollbar-thumb {
+            background-color: var(--console-color);
+            border-radius: 4px;
+        }
+
+        #input-line {
+            display: inline;
+        }
+
+        .blinking-cursor {
+            display: inline-block;
+            width: 10px;
+            background-color: var(--console-color);
+            animation: blink 3s steps(10) infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+
+        .crt {
+            background: linear-gradient(to top, var(--console-scanlines1), var(--console-scanlines1), #222222, #333333);
+            background-size: cover;
+            background-size: 100% 2pt;
+
+            text-shadow: 0 0 5px var(--console-color), 0 0 10px var(--console-color);
+        }
+
+        @media screen {
+            .crt {
+                animation: scanlines infinite 55s linear;
+            }
+        }
+
+        @keyframes scanlines {
+            from {
+                background-position: 0 0;
+            }
+
+            to {
+                background-position: 0 -10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="console" class="crt"></div>
+    <script type="module">
+        const consoleDiv = document.getElementById('console');
+
+        let commands = {};
+        let history = [];
+        let historyIndex = 0;
+        let buffer = '';
+
+        const importDefaultCommands = async () => {
+            var commandsDefault = (await import('./commands1.js')).commands;
+            commands = Object.assign({}, commandsDefault)
+            importCommandsFromUrl('./commands2.js');
+            console.log(commands);
+        }
+        const importCommandsFromUrl = async (url) => {
+            var commandsFromUrl = (await import(url)).commands;
+            for (const key in commandsFromUrl) {
+                if (commandsFromUrl.hasOwnProperty(key)) {
+                    commands[key] = commandsFromUrl[key];
+                }
+            }
+            console.log(extractLeadingComments(commands['draw1']).toString());
+        }
+
+        const runCommand = async (input) => {
+            //console.log(cmd);
+            const cmd = input.split(" ", 1)[0];
+            const cmdParams = input.substring(input.indexOf(" ") + 1).trim();
+            console.log(cmd, cmdParams);
+            console.log(typeof commands[cmd] === 'function');
+            console.log(cmd in commands);
+            //console.log(commands);
+            if (cmd === "cls") {
+                clearConsole();
+            } else if (cmd === "crt") {
+                consoleDiv.className = cmdParams === "on" ? "crt" : "";
+            } else if (cmd && cmd === 'color') {
+                changeConsoleColor(cmdParams);
+            } else if (cmd === "draw") {
+                await drawAsciiArt();
+            } else if (cmd === "help") {
+                return await showHelp(commands);
+            } else if (cmd in commands && typeof commands[cmd] === 'function') {
+                return commands[cmd](cmdParams);
+            }
+        }
+        const drawAsciiArt = async () => {
+            const asciiArt = `
+        /\\
+       /  \\
+      /____\\
+       ||||
+       ||||
+      `;
+            await creatResponseLine(asciiArt);
+        };
+        const drawAsciiArt2 = async () => {
+            const asciiArt = `
+                                    +              #####
+                                   / \\
+ _____        _____     __________/ o \\/\\_________      _________
+|o o o|_______|    |___|               | | # # #  |____|o o o o  | /\\
+|o o o|  * * *|: ::|. .|               |o| # # #  |. . |o o o o  |//\\\\
+|o o o|* * *  |::  |. .| []  []  []  []|o| # # #  |. . |o o o o  |((|))
+|o o o|**  ** |:  :|. .| []  []  []    |o| # # #  |. . |o o o o  |((|))
+|_[]__|__[]___|_||_|__<|____________;;_|_|___/\___|_.|_|____[]___|  |
+            `;
+            await creatResponseLine(asciiArt);
+        }
+        const clearConsole = () => {
+            while (consoleDiv.firstChild) {
+                consoleDiv.removeChild(consoleDiv.firstChild);
+            }
+            consoleDiv.textContent = "WELCOME TO RETRO-TERM 1.0\nTYPE SOMETHING BELOW:";
+        };
+        function changeConsoleColor(colorId) {
+            //console.log(colorId);
+            const names = ['green', 'jumpin jack flash', 'cmd', 'war games', 'minicomputer', 'pc', 'apple II', 'MATRIX', 'unix', 'clamshell', 'terminal', 'LOST'];
+            const frcolors = ['#00FF00', '#96833E', '#C0C0C0', '#7BD7E9', '#C58022', '#B37009', '#3AB582', '#4AF6B0', '#7DC6F6', '#BDC328', '#15FAFF', '#4DF1A2'];
+            const bgColors = ['black', 'black', 'black', 'black', '#3E270E', '24231F', '#151E1B', '#151E1B', '#171B1E', '#24210E', 'black', 'black'];
+            const scan1Colors = ['black', 'black', 'black', 'black', '#3E270E', 'black', 'black', 'black', 'black', 'black', 'black', 'black']
+            const fontWeights = ['unset', 'unset', 'unset', 'bold', 'unset', 'bold', 'unset', 'bold', 'unset', 'unset', 'bold', 'unset']
+            var index = parseInt(colorId);
+            if (!index || index > bgColors.length - 1) index = 0;
+            document.body.style.setProperty('--console-fontw', fontWeights[index]);
+            document.body.style.setProperty('--console-color', frcolors[index]);
+            document.body.style.setProperty('--console-bgcolor', bgColors[index]);
+            document.body.style.setProperty('--console-scanlines1', scan1Colors[index]);
+        }
+
+        const createInputLine = () => {
+            const lineBreak = document.createElement('br');
+            const prompt = document.createTextNode('> ');
+            const inputLine = document.createElement('span');
+            inputLine.className = 'input-line';
+
+            const cursor = document.createElement('span');
+            cursor.className = 'blinking-cursor';
+            cursor.textContent = "I";
+
+            consoleDiv.appendChild(lineBreak);
+            consoleDiv.appendChild(prompt);
+            consoleDiv.appendChild(inputLine);
+            consoleDiv.appendChild(cursor);
+
+            return { inputLine, cursor };
+        };
+        const creatResponseLine = async (text) => {
+            const lineBreak = document.createElement('br');
+            const responseSpan = document.createElement('span');
+
+            const cursor = document.createElement('span');
+            cursor.textContent = "I";
+            cursor.className = 'blinking-cursor';
+
+            consoleDiv.appendChild(lineBreak);
+            consoleDiv.appendChild(responseSpan);
+            consoleDiv.appendChild(cursor);
+            const totalDuration = 400;
+            const delayDuration = text.length > 0 ? Math.round(totalDuration / text.length) + 1 : totalDuration;
+            for (let i = 0; i < text.length; i++) {
+                responseSpan.textContent += text[i];
+                consoleDiv.scrollTop = consoleDiv.scrollHeight;
+                await new Promise(resolve => setTimeout(resolve, delayDuration));
+            }
+            cursor.remove();
+        };
+        const addInputToHistory = async (input) => {
+            if (input.trim() && buffer !== history[history.length - 1]) {
+                history.push(input);
+            }
+            historyIndex = history.length;
+        }
+        function extractLeadingComments(fnOrSource) {
+            // Get the source code as a string
+            const src = typeof fnOrSource === 'function'
+                ? fnOrSource.toString()
+                : fnOrSource;
+
+            // Strip away everything before the opening "{"
+            const bodyStart = src.indexOf('{') + 1;
+            // Strip away everything after the matching closing "}"
+            // (naive: last "}", but works for simple single-function strings)
+            const bodyEnd = src.lastIndexOf('}');
+            const body = src.slice(bodyStart, bodyEnd);
+
+            const lines = body.split(/\r?\n/);
+            const comments = [];
+
+            for (let line of lines) {
+                const t = line.trim();
+                if (t.startsWith('//')) {
+                    // single-line comment
+                    comments.push(t.slice(2).trim());
+                }
+                else if (t.startsWith('/*')) {
+                    // collect a /* ... */ block
+                    let block = t;
+                    // if not closed on same line, continue collecting
+                    if (!t.includes('*/')) {
+                        let i = lines.indexOf(line) + 1;
+                        while (i < lines.length && !lines[i].includes('*/')) {
+                            block += '\n' + lines[i].trim();
+                            i++;
+                        }
+                        if (i < lines.length) {
+                            block += '\n' + lines[i].trim();
+                        }
+                    }
+                    // strip the /* and */ markers
+                    const stripped = block
+                        .replace(/^\/\*/, '')
+                        .replace(/\*\/$/, '')
+                        .trim();
+                    comments.push(stripped);
+                }
+                else if (t === '') {
+                    // skip blank lines at top
+                    continue;
+                }
+                else {
+                    // first non-comment, non-blank line → stop
+                    break;
+                }
+            }
+
+            return comments;
+        }
+        async function showHelp(commandsObj) {
+            let multiLine = '';
+            console.log(commandsObj['test']);
+            const cmds = Object.keys(commandsObj);
+            console.log(cmds);
+            console.log(cmds.length);
+            for (let index = 0; index < cmds.length; index++) {
+                const cmdName = cmds[index];
+                console.log(cmdName);
+                const desc = extractLeadingComments(commandsObj[cmdName]).toString();
+                multiLine += `${cmdName}\n`;
+            }
+            console.log(multiLine);
+            return multiLine; 
+        }
+
+        //START CONSOLE:
+        let inputLine, cursor = {};
+        const initConsole = async (input) => {
+            await importDefaultCommands();
+            changeConsoleColor(0);
+            clearConsole();
+            const line = createInputLine();
+            inputLine = line.inputLine;
+            cursor = line.cursor;
+        }
+        initConsole();
+        //EOF START CONSOLE//
+
+        document.addEventListener('keydown', function (event) {
+            if ((event.ctrlKey || event.metaKey) && (event.key === 'v' || event.key === 'c')) {
+                return; // allow paste, copy
+            }
+
+            if (event.key === 'Backspace') {
+                buffer = buffer.slice(0, -1);
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                event.stopPropagation();
+                if (history.length > 0) {
+                    historyIndex = Math.max(0, historyIndex - 1);
+                    console.log(historyIndex);
+                    buffer = history[historyIndex];
+                }
+            } else if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                event.stopPropagation();
+                if (history.length > 0) {
+                    historyIndex = Math.min(history.length - 1, historyIndex + 1);
+                    console.log(historyIndex);
+                    buffer = history[historyIndex];
+                }
+            } else if (event.key === 'Tab') {
+                event.preventDefault();
+                event.stopPropagation();
+                return;
+            } else if (event.key === 'Enter') {
+                const handleLineInputAsync = async () => {
+                    consoleDiv.removeChild(cursor);
+                    inputLine.textContent = buffer;
+
+                    const commandResposne = await runCommand(buffer);
+                    await addInputToHistory(buffer);
+
+                    if (commandResposne) {
+                        await creatResponseLine(commandResposne);
+                    } else {
+                        await creatResponseLine(`\nYOU TYPED: ${buffer}`);
+                    }
+
+                    buffer = '';
+                    ({ inputLine, cursor } = createInputLine());
+                    consoleDiv.scrollTop = consoleDiv.scrollHeight;
+                    return;
+                }
+                handleLineInputAsync();
+            } else if (event.key.length === 1) {
+                buffer += event.key;
+            }
+            inputLine.textContent = buffer;
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        });
+
+        document.addEventListener('paste', async (event) => {
+            if (!inputLine || !cursor) return;
+            const pasteText = (event.clipboardData || window.clipboardData).getData('text');
+            buffer += pasteText;
+            inputLine.textContent = buffer;
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+
+            // // Simulate pressing Enter
+            // const enterEvent = new KeyboardEvent('keydown', {
+            //     key: 'Enter'
+            // });
+            // document.dispatchEvent(enterEvent);
+        });
+
+    </script>
+</body>
+
+</html>
