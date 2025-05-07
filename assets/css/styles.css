@@ -1,0 +1,87 @@
+body {
+    background-color: black;
+    font-family: 'Courier New', Courier, monospace;
+    margin: 0;
+    padding: 20px;
+    font-size: 1em;
+}
+
+#console {
+    background-color: var(--console-bgcolor);
+    color: var(--console-color);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.2em;
+    font-weight: var(--console-fontw);
+    width: 100%;
+    height: 90vh;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    line-height: 1.4;
+    border: 2px solid var(--console-color);
+    padding: 10px;
+    box-sizing: border-box;
+    z-index: 1;
+    scrollbar-width: thin;
+    scrollbar-color: var(--console-color) var(--console-bgcolor);
+}
+
+#console::-webkit-scrollbar {
+    width: 8px;
+}
+
+#console::-webkit-scrollbar-track {
+    background: var(--console-bgcolor);
+}
+
+#console::-webkit-scrollbar-thumb {
+    background-color: var(--console-color);
+    border-radius: 4px;
+}
+
+#input-line {
+    display: inline;
+}
+
+.blinking-cursor {
+    display: inline-block;
+    width: 10px;
+    background-color: var(--console-color);
+    animation: blink 3s steps(10) infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+}
+
+
+.crt {
+    background: linear-gradient(to top, var(--console-scanlines1), var(--console-scanlines1), #222222, #333333);
+    background-size: cover;
+    background-size: 100% 2pt;
+
+    text-shadow: 0 0 5px var(--console-color), 0 0 10px var(--console-color);
+}
+
+@media screen {
+    .crt {
+        animation: scanlines infinite 55s linear;
+    }
+}
+
+@keyframes scanlines {
+    from {
+        background-position: 0 0;
+    }
+
+    to {
+        background-position: 0 -10px;
+    }
+}

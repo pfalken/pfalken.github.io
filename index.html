@@ -1,110 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- 96833E -->
-
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="./assets/css/styles.css">
     <title>70s Style Console</title>
-    <style>
-        body {
-            background-color: black;
-            font-family: 'Courier New', Courier, monospace;
-            margin: 0;
-            padding: 20px;
-            font-size: 1em;
-        }
-
-        #console {
-            background-color: var(--console-bgcolor);
-            color: var(--console-color);
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1.2em;
-            font-weight: var(--console-fontw);
-            width: 100%;
-            height: 90vh;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            line-height: 1.4;
-            border: 2px solid var(--console-color);
-            padding: 10px;
-            box-sizing: border-box;
-            z-index: 1;
-            scrollbar-width: thin;
-            scrollbar-color: var(--console-color) var(--console-bgcolor);
-        }
-
-        #console::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        #console::-webkit-scrollbar-track {
-            background: var(--console-bgcolor);
-        }
-
-        #console::-webkit-scrollbar-thumb {
-            background-color: var(--console-color);
-            border-radius: 4px;
-        }
-
-        #input-line {
-            display: inline;
-        }
-
-        .blinking-cursor {
-            display: inline-block;
-            width: 10px;
-            background-color: var(--console-color);
-            animation: blink 3s steps(10) infinite;
-        }
-
-        @keyframes blink {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.8;
-            }
-        }
-
-
-        .crt {
-            background: linear-gradient(to top, var(--console-scanlines1), var(--console-scanlines1), #222222, #333333);
-            background-size: cover;
-            background-size: 100% 2pt;
-
-            text-shadow: 0 0 5px var(--console-color), 0 0 10px var(--console-color);
-        }
-
-        @media screen {
-            .crt {
-                animation: scanlines infinite 55s linear;
-            }
-        }
-
-        @keyframes scanlines {
-            from {
-                background-position: 0 0;
-            }
-
-            to {
-                background-position: 0 -10px;
-            }
-        }
-    </style>
 </head>
 
 <body>
     <div id="console" class="crt"></div>
     <script type="module">
-        const consoleDiv = document.getElementById('console');
+        import * as dr from "./scripts/indexdr.js";
+        const consoleDiv = dr.consoleDiv;
 
-        let commands = {};
-        let history = [];
-        let historyIndex = 0;
-        let buffer = '';
+        let commands = {};        
 
         const importDefaultCommands = async () => {
             var commandsDefault = (await import('./commands1.js')).commands;
@@ -131,106 +39,19 @@
             console.log(cmd in commands);
             //console.log(commands);
             if (cmd === "cls") {
-                clearConsole();
+                dr.clearConsole();
             } else if (cmd === "crt") {
                 consoleDiv.className = cmdParams === "on" ? "crt" : "";
             } else if (cmd && cmd === 'color') {
-                changeConsoleColor(cmdParams);
-            } else if (cmd === "draw") {
-                await drawAsciiArt();
+                dr.changeConsoleColor(cmdParams);
             } else if (cmd === "help") {
                 return await showHelp(commands);
             } else if (cmd in commands && typeof commands[cmd] === 'function') {
                 return commands[cmd](cmdParams);
             }
         }
-        const drawAsciiArt = async () => {
-            const asciiArt = `
-        /\\
-       /  \\
-      /____\\
-       ||||
-       ||||
-      `;
-            await creatResponseLine(asciiArt);
-        };
-        const drawAsciiArt2 = async () => {
-            const asciiArt = `
-                                    +              #####
-                                   / \\
- _____        _____     __________/ o \\/\\_________      _________
-|o o o|_______|    |___|               | | # # #  |____|o o o o  | /\\
-|o o o|  * * *|: ::|. .|               |o| # # #  |. . |o o o o  |//\\\\
-|o o o|* * *  |::  |. .| []  []  []  []|o| # # #  |. . |o o o o  |((|))
-|o o o|**  ** |:  :|. .| []  []  []    |o| # # #  |. . |o o o o  |((|))
-|_[]__|__[]___|_||_|__<|____________;;_|_|___/\___|_.|_|____[]___|  |
-            `;
-            await creatResponseLine(asciiArt);
-        }
-        const clearConsole = () => {
-            while (consoleDiv.firstChild) {
-                consoleDiv.removeChild(consoleDiv.firstChild);
-            }
-            consoleDiv.textContent = "WELCOME TO RETRO-TERM 1.0\nTYPE SOMETHING BELOW:";
-        };
-        function changeConsoleColor(colorId) {
-            //console.log(colorId);
-            const names = ['green', 'jumpin jack flash', 'cmd', 'war games', 'minicomputer', 'pc', 'apple II', 'MATRIX', 'unix', 'clamshell', 'terminal', 'LOST'];
-            const frcolors = ['#00FF00', '#96833E', '#C0C0C0', '#7BD7E9', '#C58022', '#B37009', '#3AB582', '#4AF6B0', '#7DC6F6', '#BDC328', '#15FAFF', '#4DF1A2'];
-            const bgColors = ['black', 'black', 'black', 'black', '#3E270E', '24231F', '#151E1B', '#151E1B', '#171B1E', '#24210E', 'black', 'black'];
-            const scan1Colors = ['black', 'black', 'black', 'black', '#3E270E', 'black', 'black', 'black', 'black', 'black', 'black', 'black']
-            const fontWeights = ['unset', 'unset', 'unset', 'bold', 'unset', 'bold', 'unset', 'bold', 'unset', 'unset', 'bold', 'unset']
-            var index = parseInt(colorId);
-            if (!index || index > bgColors.length - 1) index = 0;
-            document.body.style.setProperty('--console-fontw', fontWeights[index]);
-            document.body.style.setProperty('--console-color', frcolors[index]);
-            document.body.style.setProperty('--console-bgcolor', bgColors[index]);
-            document.body.style.setProperty('--console-scanlines1', scan1Colors[index]);
-        }
-
-        const createInputLine = () => {
-            const lineBreak = document.createElement('br');
-            const prompt = document.createTextNode('> ');
-            const inputLine = document.createElement('span');
-            inputLine.className = 'input-line';
-
-            const cursor = document.createElement('span');
-            cursor.className = 'blinking-cursor';
-            cursor.textContent = "I";
-
-            consoleDiv.appendChild(lineBreak);
-            consoleDiv.appendChild(prompt);
-            consoleDiv.appendChild(inputLine);
-            consoleDiv.appendChild(cursor);
-
-            return { inputLine, cursor };
-        };
-        const creatResponseLine = async (text) => {
-            const lineBreak = document.createElement('br');
-            const responseSpan = document.createElement('span');
-
-            const cursor = document.createElement('span');
-            cursor.textContent = "I";
-            cursor.className = 'blinking-cursor';
-
-            consoleDiv.appendChild(lineBreak);
-            consoleDiv.appendChild(responseSpan);
-            consoleDiv.appendChild(cursor);
-            const totalDuration = 400;
-            const delayDuration = text.length > 0 ? Math.round(totalDuration / text.length) + 1 : totalDuration;
-            for (let i = 0; i < text.length; i++) {
-                responseSpan.textContent += text[i];
-                consoleDiv.scrollTop = consoleDiv.scrollHeight;
-                await new Promise(resolve => setTimeout(resolve, delayDuration));
-            }
-            cursor.remove();
-        };
-        const addInputToHistory = async (input) => {
-            if (input.trim() && buffer !== history[history.length - 1]) {
-                history.push(input);
-            }
-            historyIndex = history.length;
-        }
+        
+        
         function extractLeadingComments(fnOrSource) {
             // Get the source code as a string
             const src = typeof fnOrSource === 'function'
@@ -306,9 +127,9 @@
         let inputLine, cursor = {};
         const initConsole = async (input) => {
             await importDefaultCommands();
-            changeConsoleColor(0);
-            clearConsole();
-            const line = createInputLine();
+            dr.changeConsoleColor(0);
+            dr.clearConsole();
+            const line = dr.createInputLine();
             inputLine = line.inputLine;
             cursor = line.cursor;
         }
@@ -321,22 +142,22 @@
             }
 
             if (event.key === 'Backspace') {
-                buffer = buffer.slice(0, -1);
+                dr.store.buffer = dr.store.buffer.slice(0, -1);
             } else if (event.key === 'ArrowUp') {
                 event.preventDefault();
                 event.stopPropagation();
-                if (history.length > 0) {
-                    historyIndex = Math.max(0, historyIndex - 1);
-                    console.log(historyIndex);
-                    buffer = history[historyIndex];
+                if (dr.store.history.length > 0) {
+                    dr.store.historyIndex = Math.max(0, dr.store.historyIndex - 1);
+                    console.log(dr.store.historyIndex);
+                    dr.store.buffer = dr.store.history[dr.store.historyIndex];
                 }
             } else if (event.key === 'ArrowDown') {
                 event.preventDefault();
                 event.stopPropagation();
-                if (history.length > 0) {
-                    historyIndex = Math.min(history.length - 1, historyIndex + 1);
-                    console.log(historyIndex);
-                    buffer = history[historyIndex];
+                if (dr.store.history.length > 0) {
+                    dr.store.historyIndex = Math.min(dr.store.history.length - 1, dr.store.historyIndex + 1);
+                    console.log(dr.store.historyIndex);
+                    dr.store.buffer = dr.store.history[dr.store.historyIndex];
                 }
             } else if (event.key === 'Tab') {
                 event.preventDefault();
@@ -345,35 +166,35 @@
             } else if (event.key === 'Enter') {
                 const handleLineInputAsync = async () => {
                     consoleDiv.removeChild(cursor);
-                    inputLine.textContent = buffer;
+                    inputLine.textContent = dr.store.buffer;
 
-                    const commandResposne = await runCommand(buffer);
-                    await addInputToHistory(buffer);
+                    const commandResposne = await runCommand(dr.store.buffer);
+                    await dr.addInputToHistory(dr.store.buffer);
 
                     if (commandResposne) {
-                        await creatResponseLine(commandResposne);
+                        await dr.creatResponseLine(commandResposne);
                     } else {
-                        await creatResponseLine(`\nYOU TYPED: ${buffer}`);
+                        await dr.creatResponseLine(`\nYOU TYPED: ${dr.store.buffer}`);
                     }
 
-                    buffer = '';
-                    ({ inputLine, cursor } = createInputLine());
+                    dr.store.buffer = '';
+                    ({ inputLine, cursor } = dr.createInputLine());
                     consoleDiv.scrollTop = consoleDiv.scrollHeight;
                     return;
                 }
                 handleLineInputAsync();
             } else if (event.key.length === 1) {
-                buffer += event.key;
+                dr.store.buffer += event.key;
             }
-            inputLine.textContent = buffer;
+            inputLine.textContent = dr.store.buffer;
             consoleDiv.scrollTop = consoleDiv.scrollHeight;
         });
 
         document.addEventListener('paste', async (event) => {
             if (!inputLine || !cursor) return;
             const pasteText = (event.clipboardData || window.clipboardData).getData('text');
-            buffer += pasteText;
-            inputLine.textContent = buffer;
+            dr.store.buffer += pasteText;
+            inputLine.textContent = dr.store.buffer;
             consoleDiv.scrollTop = consoleDiv.scrollHeight;
 
             // // Simulate pressing Enter
