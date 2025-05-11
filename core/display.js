@@ -1,16 +1,9 @@
 export const consoleDiv = document.getElementById('console');
-export const store = {
-    history: [],
-    historyIndex: 0,
-    buffer: ''
+export const mem = {
+    
 };
 
-export async function addInputToHistory(input) {
-    if (input.trim() && store.buffer !== store.history[store.history.length - 1]) {
-        store.history.push(input);
-    }
-    store.historyIndex = store.history.length;
-}
+
 
 export function createInputLine() {
     const lineBreak = document.createElement('br');
@@ -55,7 +48,7 @@ export function clearConsole() {
     while (consoleDiv.firstChild) {
         consoleDiv.removeChild(consoleDiv.firstChild);
     }
-    consoleDiv.textContent = "WELCOME TO RETRO-TERM 1.0\nTYPE SOMETHING BELOW:";
+    consoleDiv.textContent = "WELCOME TO RETRO-TERM 1.0\nTYPE SOMETHING BELOW:\n";
 };
 
 export function changeConsoleColor(colorId) {

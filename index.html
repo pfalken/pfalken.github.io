@@ -8,203 +8,27 @@
 
 <body>
     <div id="console" class="crt"></div>
+
+    
     <script type="module">
-        import * as dr from "./scripts/indexdr.js";
-        const consoleDiv = dr.consoleDiv;
-
-        let commands = {};        
-
-        const importDefaultCommands = async () => {
-            var commandsDefault = (await import('./commands1.js')).commands;
-            commands = Object.assign({}, commandsDefault)
-            importCommandsFromUrl('./commands2.js');
-            console.log(commands);
-        }
-        const importCommandsFromUrl = async (url) => {
-            var commandsFromUrl = (await import(url)).commands;
-            for (const key in commandsFromUrl) {
-                if (commandsFromUrl.hasOwnProperty(key)) {
-                    commands[key] = commandsFromUrl[key];
-                }
-            }
-            console.log(extractLeadingComments(commands['draw1']).toString());
-        }
-
-        const runCommand = async (input) => {
-            //console.log(cmd);
-            const cmd = input.split(" ", 1)[0];
-            const cmdParams = input.substring(input.indexOf(" ") + 1).trim();
-            console.log(cmd, cmdParams);
-            console.log(typeof commands[cmd] === 'function');
-            console.log(cmd in commands);
-            //console.log(commands);
-            if (cmd === "cls") {
-                dr.clearConsole();
-            } else if (cmd === "crt") {
-                consoleDiv.className = cmdParams === "on" ? "crt" : "";
-            } else if (cmd && cmd === 'color') {
-                dr.changeConsoleColor(cmdParams);
-            } else if (cmd === "help") {
-                return await showHelp(commands);
-            } else if (cmd in commands && typeof commands[cmd] === 'function') {
-                return commands[cmd](cmdParams);
-            }
-        }
+        import * as dr from "/core/display.js";
+        import * as uii from "/core/ui_input.js";
+        import * as cmds from "/core/commands_manager.js";
         
-        
-        function extractLeadingComments(fnOrSource) {
-            // Get the source code as a string
-            const src = typeof fnOrSource === 'function'
-                ? fnOrSource.toString()
-                : fnOrSource;
-
-            // Strip away everything before the opening "{"
-            const bodyStart = src.indexOf('{') + 1;
-            // Strip away everything after the matching closing "}"
-            // (naive: last "}", but works for simple single-function strings)
-            const bodyEnd = src.lastIndexOf('}');
-            const body = src.slice(bodyStart, bodyEnd);
-
-            const lines = body.split(/\r?\n/);
-            const comments = [];
-
-            for (let line of lines) {
-                const t = line.trim();
-                if (t.startsWith('//')) {
-                    // single-line comment
-                    comments.push(t.slice(2).trim());
-                }
-                else if (t.startsWith('/*')) {
-                    // collect a /* ... */ block
-                    let block = t;
-                    // if not closed on same line, continue collecting
-                    if (!t.includes('*/')) {
-                        let i = lines.indexOf(line) + 1;
-                        while (i < lines.length && !lines[i].includes('*/')) {
-                            block += '\n' + lines[i].trim();
-                            i++;
-                        }
-                        if (i < lines.length) {
-                            block += '\n' + lines[i].trim();
-                        }
-                    }
-                    // strip the /* and */ markers
-                    const stripped = block
-                        .replace(/^\/\*/, '')
-                        .replace(/\*\/$/, '')
-                        .trim();
-                    comments.push(stripped);
-                }
-                else if (t === '') {
-                    // skip blank lines at top
-                    continue;
-                }
-                else {
-                    // first non-comment, non-blank line → stop
-                    break;
-                }
-            }
-
-            return comments;
-        }
-        async function showHelp(commandsObj) {
-            let multiLine = '';
-            console.log(commandsObj['test']);
-            const cmds = Object.keys(commandsObj);
-            console.log(cmds);
-            console.log(cmds.length);
-            for (let index = 0; index < cmds.length; index++) {
-                const cmdName = cmds[index];
-                console.log(cmdName);
-                const desc = extractLeadingComments(commandsObj[cmdName]).toString();
-                multiLine += `${cmdName}\n`;
-            }
-            console.log(multiLine);
-            return multiLine; 
-        }
-
         //START CONSOLE:
-        let inputLine, cursor = {};
+        //let inputLine, cursor = {};
         const initConsole = async (input) => {
-            await importDefaultCommands();
-            dr.changeConsoleColor(0);
+            await cmds.importDefaultCommands();
+            dr.changeConsoleColor(6);
             dr.clearConsole();
             const line = dr.createInputLine();
-            inputLine = line.inputLine;
-            cursor = line.cursor;
+            uii.mem.inputLine = line.inputLine;
+            uii.mem.cursor = line.cursor;
         }
         initConsole();
         //EOF START CONSOLE//
 
-        document.addEventListener('keydown', function (event) {
-            if ((event.ctrlKey || event.metaKey) && (event.key === 'v' || event.key === 'c')) {
-                return; // allow paste, copy
-            }
-
-            if (event.key === 'Backspace') {
-                dr.store.buffer = dr.store.buffer.slice(0, -1);
-            } else if (event.key === 'ArrowUp') {
-                event.preventDefault();
-                event.stopPropagation();
-                if (dr.store.history.length > 0) {
-                    dr.store.historyIndex = Math.max(0, dr.store.historyIndex - 1);
-                    console.log(dr.store.historyIndex);
-                    dr.store.buffer = dr.store.history[dr.store.historyIndex];
-                }
-            } else if (event.key === 'ArrowDown') {
-                event.preventDefault();
-                event.stopPropagation();
-                if (dr.store.history.length > 0) {
-                    dr.store.historyIndex = Math.min(dr.store.history.length - 1, dr.store.historyIndex + 1);
-                    console.log(dr.store.historyIndex);
-                    dr.store.buffer = dr.store.history[dr.store.historyIndex];
-                }
-            } else if (event.key === 'Tab') {
-                event.preventDefault();
-                event.stopPropagation();
-                return;
-            } else if (event.key === 'Enter') {
-                const handleLineInputAsync = async () => {
-                    consoleDiv.removeChild(cursor);
-                    inputLine.textContent = dr.store.buffer;
-
-                    const commandResposne = await runCommand(dr.store.buffer);
-                    await dr.addInputToHistory(dr.store.buffer);
-
-                    if (commandResposne) {
-                        await dr.creatResponseLine(commandResposne);
-                    } else {
-                        await dr.creatResponseLine(`\nYOU TYPED: ${dr.store.buffer}`);
-                    }
-
-                    dr.store.buffer = '';
-                    ({ inputLine, cursor } = dr.createInputLine());
-                    consoleDiv.scrollTop = consoleDiv.scrollHeight;
-                    return;
-                }
-                handleLineInputAsync();
-            } else if (event.key.length === 1) {
-                dr.store.buffer += event.key;
-            }
-            inputLine.textContent = dr.store.buffer;
-            consoleDiv.scrollTop = consoleDiv.scrollHeight;
-        });
-
-        document.addEventListener('paste', async (event) => {
-            if (!inputLine || !cursor) return;
-            const pasteText = (event.clipboardData || window.clipboardData).getData('text');
-            dr.store.buffer += pasteText;
-            inputLine.textContent = dr.store.buffer;
-            consoleDiv.scrollTop = consoleDiv.scrollHeight;
-
-            // // Simulate pressing Enter
-            // const enterEvent = new KeyboardEvent('keydown', {
-            //     key: 'Enter'
-            // });
-            // document.dispatchEvent(enterEvent);
-        });
-
     </script>
-</body>
 
+</body>
 </html>

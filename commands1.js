@@ -4,6 +4,12 @@
  * Command implementations that can be dynamically invoked by name.
  */
 export const commands = {
+    mymy: {
+        t1() { 
+            //this is t1
+            console.log('t1') 
+        },
+    },
     test() {
         console.log("HELLO TEST FROM COMMANDS");
         return "test_ok";
