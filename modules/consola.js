@@ -13,5 +13,8 @@ export const commands = {
         dr.consoleDiv.className = input === "off" ? "" : "crt";
     },
     
+    async print(input){
+        await dr.creatResponseLine(input);
+    }
     
 };

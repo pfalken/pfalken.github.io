@@ -15,7 +15,8 @@ export async function runCommand(input) {
         found: true
     };
     cmd.command = input.split(" ", 1)[0];
-    cmd.params = input.substring(input.indexOf(" ") + 1).trim();
+    if(input.indexOf(" ") > 0)
+        cmd.params = input.substring(input.indexOf(" ") + 1).trim();
     console.log(cmd);
     console.log(typeof mem.commands[cmd.command] === 'function');
     console.log(cmd.command in mem.commands);
@@ -35,6 +36,8 @@ export async function importDefaultCommands() {
     mem.commands = Object.assign({}, commandsDefault)
     importCommandsFromUrl('/commands1.js');
     importCommandsFromUrl('/commands2.js');
+    importCommandsFromUrl('/modules/btc.js');
+    importCommandsFromUrl('/modules/disk.js');
     console.log(mem.commands);
 }
 export async function importCommandsFromUrl(url) {
