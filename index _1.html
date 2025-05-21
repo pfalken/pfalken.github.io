@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>70s Style Console</title>
+    <link rel="stylesheet" href="./assets/css/styles.css">
+    
+</head>
+
+<body>
+    <div id="console" class="crt"></div>
+        
+    <script type="module">
+        import * as dr from "/core/display.js";
+        import * as uii from "/core/ui_input.js";
+        import * as cmds from "/core/commands_manager.js";
+        
+        //START CONSOLE:
+        //let inputLine, cursor = {};
+        const initConsole = async (input) => {
+            await cmds.importDefaultCommands();
+            dr.changeConsoleColor(6);
+            dr.clearConsole();
+            const line = dr.createInputLine();
+            uii.mem.inputLine = line.inputLine;
+            uii.mem.cursor = line.cursor;
+        }
+        initConsole();
+        //EOF START CONSOLE//
+
+    </script>
+
+</body>
+</html>
